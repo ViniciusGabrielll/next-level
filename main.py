@@ -40,6 +40,15 @@ def curve_right():
         while not left_sensor.color() == Color.BLACK:
             left_motor.dc(70)
             right_motor.dc(-70)
+
+def curve_left():
+    if left_sensor.color() == Color.BLACK and right_sensor.color() == Color.WHITE:
+        ev3.speaker.beep()
+        while not right_sensor.color() == Color.BLACK:
+            left_motor.dc(-70)
+            right_motor.dc(70)
+
 while True:
-    lineFollower(1.2)
+    lineFollower(1.5)
     curve_right()
+    curve_left()

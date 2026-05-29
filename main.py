@@ -1,4 +1,5 @@
 #!/usr/bin/env pybricks-micropython
+import time
 from pybricks.hubs import EV3Brick
 from pybricks.parameters import Color
 from pybricks.ev3devices import Motor, ColorSensor
@@ -27,28 +28,41 @@ robot = DriveBase(left_motor, right_motor, wheel_diameter=diametro_roda, axle_tr
 
 def lineFollower(KP):
     erro = left_sensor.reflection() - right_sensor.reflection()
+    #ev3.print(left_sensor.reflection(), right_sensor.reflection())
     correction = erro * KP
 
-
-    left_speed = base_speed - correction
-    right_speed = base_speed + correction
+    left_speed = base_speed + correction
+    right_speed = base_speed - correction
     right_motor.dc(left_speed)
     left_motor.dc(right_speed)
 def curve_right():
-    if left_sensor.color() == Color.WHITE and right_sensor.color() == Color.BLACK:
+    if left_sensor.reflection() >= 27 and right_sensor.reflection() <=6:
+        print("curva direita")
         ev3.speaker.beep()
-        while not left_sensor.color() == Color.BLACK:
-            left_motor.dc(70)
+        while not left_sensor.reflection() <= 6:
+            left_motor.dc(-80)
+            right_motor.dc(30)
+def curve_left():
+    if right_sensor.reflection() >= 27 and left_sensor.reflection() <= 6:
+        print("curva esquerda")
+        ev3.speaker.beep()
+        while not right_sensor.reflection() <= 6:
+            left_motor.dc(65)
+            right_motor.dc(-95)
+def pass_gap():
+    if right_sensor.reflection() and left_sensor.reflection() >= 35:
+        print("GAP DETECTADO")
+        while right_sensor.reflection() and left_sensor.reflection() >= 35:
+            print("DENTRO DO GAP")
+            left_motor.dc(-70)
             right_motor.dc(-70)
 
-def curve_left():
-    if left_sensor.color() == Color.BLACK and right_sensor.color() == Color.WHITE:
-        ev3.speaker.beep()
-        while not right_sensor.color() == Color.BLACK:
-            left_motor.dc(-70)
-            right_motor.dc(70)
-
 while True:
-    lineFollower(1.5)
+    lineFollower(3)
     curve_right()
+    if curve_right() == True:
+        time.sleep(0.25)
     curve_left()
+    if curve_left() == True:
+        time.sleep(0.25)
+    print(left_sensor.reflection(), right_sensor.reflection())

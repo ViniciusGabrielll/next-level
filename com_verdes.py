@@ -27,7 +27,6 @@ right_sensor = ColorSensor(Port.S2)
 base_speed = -40
 diametro_roda = 56
 distancia_eixos = 114
-robot = DriveBase(left_motor, right_motor, wheel_diameter=diametro_roda, axle_track=distancia_eixos)
 
 def lineFollower(KP, velocidade):
     erro = left_sensor.reflection() - right_sensor.reflection()
@@ -82,6 +81,31 @@ def pararMotores():
     left_motor.stop()
     right_motor.stop()
 
+def verde_esquerdo():
+    r, g, b = left_sensor.rgb()
+
+    return (
+        2 <= r <= 6 and
+        15 <= g <= 22 and
+        11 <= b <= 18
+    )
+
+def verde_direito():
+    r, g, b = right_sensor.rgb()
+
+    return (
+        2 <= r <= 6 and
+        18 <= g <= 24 and
+        13 <= b <= 20
+    )
+def falso_verde():
+    print("Falso positivo")
+    left_motor.dc(40)
+    right_motor.dc(40)
+    wait(80)
+    pararMotores()
+
+
 fazendo_curva = False
 while True:
     distancia = ultrasonic_sensor.distance()
@@ -93,53 +117,59 @@ while True:
         lineFollower(5, 40)
         fazendo_curva = True
     else:
-        lineFollower(3.5, 44)
+        lineFollower(3.8, 44)
         fazendo_curva = False
         
     #passar dos verdes
-    """if fazendo_curva == False:
-        if left_reflection <= 4 or right_reflection <= 4:
-            wait(100)
-            left_color = left_sensor.color()
-            right_color = right_sensor.color()
-            if left_reflection >= 6 or right_reflection >= 6:
-                pass
-            if left_color != Color.GREEN or right_color != Color.GREEN:
-                left_reflection = left_sensor.reflection()
-                right_reflection = right_sensor.reflection()
-            if left_color == Color.GREEN and right_color == Color.GREEN:
-                left_reflection = left_sensor.reflection()
-                right_reflection = right_sensor.reflection()
-                print("Duplo Verde - Meia Volta")
-                left_motor.dc(-60)
-                right_motor.dc(-60)
-                wait(300)
-                left_motor.dc(-70)
-                right_motor.dc(90)
-                while gyro.angle() < 115: 
-                    print("Giro: ", gyro.angle())
-                    wait(10)
-                    if left_sensor.reflection() <= 15 and right_sensor.reflection() <= 15:
-                        continue
-            elif left_color == Color.GREEN and right_color != Color.GREEN:
-                left_reflection = left_sensor.reflection()
-                right_reflection = right_sensor.reflection()
-                print("Verde na Esquerda")
-                left_motor.dc(-60)
-                right_motor.dc(-60)
-                wait(400)
-                girar_graus(-90)
-            elif right_color == Color.GREEN and left_color != Color.GREEN:
-                left_reflection = left_sensor.reflection()
-                right_reflection = right_sensor.reflection()
-                print("Verde na Direita")
-                left_motor.dc(-60)
-                right_motor.dc(-60)
-                wait(400)
-                girar_graus(90)
-            if left_color != Color.GREEN or right_color != Color.GREEN:
-                left_sensor.reflection()
-                right_sensor.reflection()"""
+    if left_reflection <= 4 or right_reflection <= 4 and not fazendo_curva:
+        pararMotores()
+        wait(30)
+        left_green = False
+        right_green = False
+        for _ in range(10):
+            if verde_esquerdo():
+                left_green = True
+            if verde_direito():
+                right_green = True
+            wait(10)
+        if left_reflection >= 6 or right_reflection >= 6:
+            pass
+        if not left_green or not right_green:
+            left_reflection = left_sensor.reflection()
+            right_reflection = right_sensor.reflection()
+        if left_green and right_green:
+            left_reflection = left_sensor.reflection()
+            right_reflection = right_sensor.reflection()
+            print("Duplo Verde - Meia Volta")
+            left_motor.dc(-60)
+            right_motor.dc(-60)
+            wait(300)
+            left_motor.dc(-70)
+            right_motor.dc(90)
+            while gyro.angle() < 115: 
+                print("Giro: ", gyro.angle())
+                wait(10)
+                if left_sensor.reflection() <= 15 and right_sensor.reflection() <= 15:
+                    continue
+        elif left_green and not right_green:
+            left_reflection = left_sensor.reflection()
+            right_reflection = right_sensor.reflection()
+            print("Verde na Esquerda")
+            left_motor.dc(-60)
+            right_motor.dc(-60)
+            wait(400)
+            girar_graus(-90)
+        elif right_green and not left_green:
+            left_reflection = left_sensor.reflection()
+            right_reflection = right_sensor.reflection()
+            print("Verde na Direita")
+            left_motor.dc(-60)
+            right_motor.dc(-60)
+            wait(400)
+            girar_graus(90)
+        else:
+            falso_verde()
+            continue
     
     #passar dos obstáculos
     if distancia <= 100:
